@@ -1,7 +1,7 @@
 import { useUser } from '@auth0/nextjs-auth0'
 import Layout from '../components/layout'
 import { useEffect, useState } from 'react'
-import { OpenAIService } from './open-ai-service'
+import { OpenAIService } from '../services/open-ai-service'
 import ReactMarkdown from 'react-markdown';
 
 type Message = {
