@@ -1,15 +1,19 @@
 {
   "private": true,
   "scripts": {
-    "dev": "next",
+    "dev": "next -p 3003",
     "build": "next build",
     "start": "next start"
   },
   "dependencies": {
-    "@auth0/nextjs-auth0": "^1.9.1",
+    "@auth0/nextjs-auth0": "^1.9.3",
+    "bootstrap": "^5.2.3",
+    "mongoose": "^7.0.3",
     "next": "latest",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-bootstrap": "^2.7.4",
+    "react-dom": "^18.2.0",
+    "react-markdown": "^8.0.7"
   },
   "devDependencies": {
     "@types/node": "^18.0.0",
