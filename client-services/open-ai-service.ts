@@ -6,7 +6,7 @@ export type gptMessage = {
 export class OpenAIService {
     private controller: AbortController | null = null;
 
-    public async getChatGptCompletionStream(messages: gptMessage[], temperature = 0, handle: (s: string) => void) {
+    public async getCompletionStream(messages: gptMessage[], temperature = 0, handle: (s: string) => void = null) {
         try {
             const apiKey = process.env.NEXT_PUBLIC_API_KEY;
 
@@ -72,6 +72,51 @@ export class OpenAIService {
             } else {
                 console.error('An error occurred: ', error);
             }
+        }
+    }
+
+    public async getCompletionStreamFromServer(messages: gptMessage[], handle: (s: string) => void) {
+        try {
+            const response = await fetch('/api/get-stream-completion', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(messages), // TODO: Send the last message only
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error: ${response.status}`);
+            }
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder('utf-8');
+
+            const readStream = async () => {
+                try {
+                    const { done, value } = await reader.read();
+
+                    if (done) {
+                        console.log('Stream finished');
+                        return;
+                    }
+
+                    const chunk = decoder.decode(value);
+                    console.log('Received chunk:', chunk);
+
+                    if (handle) {
+                        handle(chunk);
+                    }
+
+                    readStream();
+                } catch (error) {
+                    console.error('Error reading stream:', error);
+                }
+            };
+
+            readStream();
+        } catch (error) {
+            console.error('Error fetching data:', error);
         }
     }
 }

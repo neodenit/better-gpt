@@ -1,7 +1,7 @@
 import { useUser } from '@auth0/nextjs-auth0'
 import Layout from '../components/layout'
 import { useEffect, useState } from 'react'
-import { OpenAIService } from '../services/open-ai-service'
+import { OpenAIService } from '../client-services/open-ai-service'
 import ReactMarkdown from 'react-markdown';
 
 type Message = {
@@ -47,11 +47,21 @@ const Home = () => {
 
       const openAIService = new OpenAIService();
       event.currentTarget.value = '';
-      openAIService.getChatGptCompletionStream(gptMessages, temperature, s => {
-        botMessage.text += s;
+      const server = true;
 
-        setDialogs([...dialogs]);
-      });
+      if (server) {
+        openAIService.getCompletionStreamFromServer(gptMessages, (s: string) => {
+          botMessage.text += s;
+
+          setDialogs([...dialogs]);
+        });
+      } else {
+        openAIService.getCompletionStream(gptMessages, temperature, (s: string) => {
+          botMessage.text += s;
+
+          setDialogs([...dialogs]);
+        });
+      }
     }
   }
 
