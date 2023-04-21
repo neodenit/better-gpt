@@ -5,7 +5,7 @@ import { withApiAuthRequired } from '@auth0/nextjs-auth0'
 
 const getStreamCompletion = async (req: NextApiRequest, res: NextApiResponse) => {
     try {
-        const apiKey = process.env.NEXT_PUBLIC_API_KEY;
+        const apiKey = process.env.API_KEY;
 
         const verbose = false;
         const useGPT4 = false;

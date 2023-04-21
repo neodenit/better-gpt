@@ -3,50 +3,81 @@ import Layout from '../components/layout'
 import { useEffect, useState } from 'react'
 import { OpenAIService } from '../client-services/open-ai-service'
 import ReactMarkdown from 'react-markdown';
-
-type Message = {
-  text: string,
-  sender: string,
-  timestamp: Date,
-}
-
-type Dialog = {
-  messages: Message[],
-  temperature: number,
-  model: string,
-  owner: string,
-}
+import { IDialog, IMessage } from '../lib/models/dialog';
 
 const Home = () => {
   const { user, isLoading } = useUser()
 
-  const [dialogs, setDialogs] = useState<Dialog[]>([]);
+  const [dialogs, setDialogs] = useState<IDialog[]>([]);
 
   const temperature = 0;
 
   useEffect(() => {
-    if (!user) return;
+    const fetchDialogs = async () => {
+      if (!user) return;
 
-    setDialogs([{ messages: [], temperature: 0, model: 'gpt-3.5-turbo', owner: user.email }]);
+      const dialogs = await fetch('/api/dialogs').then(r => r.json()) as IDialog[];
+      if (dialogs.find(d => d.messages.length === 0)) {
+        setDialogs(dialogs);
+      } else {
+        const newDialog: IDialog = { messages: [], temperature: 0, model: 'gpt-3.5-turbo', owner: user.email };
+        const allDialogs = [newDialog, ...dialogs];
+        setDialogs(allDialogs);
+      }
+    };
+
+    fetchDialogs();
   }, [user]);
 
-  function handleKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>, dialog: Dialog) {
+  async function handleKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>, dialog: IDialog) {
     if (event.key === 'Enter' && (event.shiftKey || event.ctrlKey)) {
       event.preventDefault();
 
-      // TODO: send api request
+      const postDialog = async (newDialog: IDialog) => {
+        const response = await fetch('/api/dialogs', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(newDialog),
+        });
 
-      const newMessage: Message = { text: event.currentTarget.value, sender: 'user', timestamp: new Date() };
+        return response.json();
+      };
+
+      const putDialog = async (oldDialog: IDialog) => {
+        await fetch('/api/dialogs', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(oldDialog),
+        });
+      };
+
+      const newMessage: IMessage = { text: event.currentTarget.value, sender: 'user' };
+
       dialog.messages.push(newMessage);
-      const botMessage: Message = { text: '', sender: 'assistant', timestamp: new Date() };
+
+      if (dialog._id) {
+        await putDialog(dialog);
+      } else {
+        const newDialog = await postDialog(dialog) as IDialog;
+        dialog._id = newDialog._id;
+      }
+
+      const botMessage: IMessage = { text: '', sender: 'assistant' };
       dialog.messages.push(botMessage);
+
+      await putDialog(dialog);
 
       const gptMessages = dialog.messages.map(m => {
         return { role: m.sender, content: m.text };
       });
 
       const openAIService = new OpenAIService();
-      event.currentTarget.value = '';
+      const textareaElement = event.target as HTMLTextAreaElement;
+      textareaElement.value = '';
       const server = true;
 
       if (server) {
@@ -54,6 +85,8 @@ const Home = () => {
           botMessage.text += s;
 
           setDialogs([...dialogs]);
+
+          putDialog(dialog);
         });
       } else {
         openAIService.getCompletionStream(gptMessages, temperature, (s: string) => {
