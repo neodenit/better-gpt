@@ -128,7 +128,7 @@ const Home = () => {
                         <li className='list-group-item' key={j}><div className='row'><div className='col-2 text-uppercase fw-bold'>{message.sender}:</div><div className='col-10'><ReactMarkdown>{message.text}</ReactMarkdown></div></div></li>
                       ))}
                     </ul>
-                    <textarea key={`textarea${i}`} id="question" name="question" rows={4} cols={50} onKeyDown={e => handleKeyDown(e, dialog)} className='form-control' />
+                    <textarea key={`textarea${i}`} placeholder="Press Ctrl+Enter or Shift+Enter to send." id="question" name="question" rows={3} cols={50} onKeyDown={e => handleKeyDown(e, dialog)} className='form-control mt-1' />
                   </div>
                 </div>
               </div>
